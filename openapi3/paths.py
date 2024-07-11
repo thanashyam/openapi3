@@ -389,7 +389,8 @@ class Operation(ObjectBase):
         response_data = None
 
         if content_type.lower() == "application/json":
-            return expected_media.schema.model(result.json())
+            # return expected_media.schema.model(result.json())
+            return result.json()
         else:
             raise NotImplementedError()
 
