@@ -337,6 +337,7 @@ class Operation(ObjectBase):
 
         self._request_handle_parameters(parameters)
 
+        self._request.headers.update({"Accept": "application/json"})
         if session is None:
             session = self._session
 
