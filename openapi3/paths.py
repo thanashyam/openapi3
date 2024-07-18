@@ -1,7 +1,7 @@
 import json
 import re
 import requests
-
+import pdb
 try:
     from urllib.parse import urlencode
 except ImportError:
@@ -238,7 +238,6 @@ class Operation(ObjectBase):
         for _ in list(p):
             # TODO - make this work with $refs - can operations be $refs?
             accepted_parameters.update({_.name: _})
-
         for name, spec in accepted_parameters.items():
             try:
                 value = parameters[name]
@@ -263,7 +262,6 @@ class Operation(ObjectBase):
 
             if spec.in_ == "cookie":
                 self._request.cookies[name] = value
-
         self._request.url = self._request.url.format(**path_parameters)
 
     def _request_handle_body(self, data):
@@ -334,9 +332,9 @@ class Operation(ObjectBase):
                 raise ValueError(err_msg)
 
             self._request_handle_body(data)
-
+        # print("PARAMETERS: ", parameters)
+        # print("Data: ", data)
         self._request_handle_parameters(parameters)
-
         self._request.headers.update({"Accept": "application/json"})
         if session is None:
             session = self._session
@@ -346,21 +344,27 @@ class Operation(ObjectBase):
 
         # spec enforces these are strings
         status_code = str(result.status_code)
-
         # find the response model in spec we received
+        
         expected_response = None
         if status_code in self.responses:
             expected_response = self.responses[status_code]
         elif "default" in self.responses:
             expected_response = self.responses["default"]
-
         if expected_response is None:
+            print(result.text)
+            print(result.headers)
             raise UnexpectedResponseError(result, self)
 
         # if we got back a valid response code (or there was a default) and no
         # response content was expected, return None
         if expected_response.content is None:
-            return
+            return {
+                "status_code": result.status_code,
+                "description": expected_response.description,
+                "headers": result.headers,
+                "content": None
+            }
 
         content_type = result.headers["Content-Type"]
         if ';' in content_type:
@@ -384,15 +388,25 @@ class Operation(ObjectBase):
             err_msg = """Unexpected Content-Type {} returned for operation {} \
                          (expected one of {})"""
             err_var = result.headers["Content-Type"], self.operationId, ",".join(expected_response.content.keys())
-
+            print("***** RESULT WITH ERROR *****")
+            print(result.text)
+            print(result.headers)
             raise RuntimeError(err_msg.format(*err_var))
 
         response_data = None
 
         if content_type.lower() == "application/json":
             # return expected_media.schema.model(result.json())
-            return result.json()
+            response = {
+                "status_code": result.status_code,
+                "headers": result.headers,
+                "description": expected_response.description,
+                "content": result.json()
+            }
+            return response
         else:
+            print("***** RESULT ***** NOT SUPPORTED")
+            print(result.text)
             raise NotImplementedError()
 
 
