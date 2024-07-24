@@ -344,6 +344,11 @@ class Operation(ObjectBase):
 
         # spec enforces these are strings
         status_code = str(result.status_code)
+        # print("***** RESULT *****")
+        # print(result.status_code)
+        # print(result.text)
+        # print(result.headers)
+        # print("~~~~~~~~~~~~~~~~~~~")
         # find the response model in spec we received
         
         expected_response = None
@@ -352,8 +357,8 @@ class Operation(ObjectBase):
         elif "default" in self.responses:
             expected_response = self.responses["default"]
         if expected_response is None:
-            print(result.text)
-            print(result.headers)
+            # print(result.text)
+            # print(result.headers)
             raise UnexpectedResponseError(result, self)
 
         # if we got back a valid response code (or there was a default) and no
